@@ -1,0 +1,29 @@
+name: Anahtar olustur (bir kez)
+# DIKKAT: Bu workflow'u yalnizca ozel (private) bir depoda calistir.
+# Cikti dosyasini indirdikten sonra Actions sayfasindan bu calismayi SIL.
+on:
+  workflow_dispatch:
+jobs:
+  keygen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Anahtar uret
+        run: |
+          PASS=$(openssl rand -hex 12)
+          keytool -genkeypair -v -keystore upload.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "$PASS" -keypass "$PASS" -dname "CN=Ozet, O=Ozet, C=TR"
+          {
+            echo "KEYSTORE_PASSWORD=$PASS"
+            echo "KEY_PASSWORD=$PASS"
+            echo "KEY_ALIAS=upload"
+            echo "KEYSTORE_BASE64 (asagidaki uzun satir):"
+            base64 -w0 upload.jks
+            echo
+          } > bilgi.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anahtar-bilgisi
+          path: |
+            upload.jks
+            bilgi.txt
+          retention-days: 1
